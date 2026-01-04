@@ -5,6 +5,7 @@ Converts natural language to Linux commands
 
 import re
 from command_mappings import COMMAND_MAPPINGS
+import config
 
 
 class NLPParser:
@@ -156,8 +157,8 @@ class NLPParser:
             # Check if phrase is in user input or user input is in phrase
             if phrase in user_input or user_input in phrase:
                 # Additional check to avoid false positives
-                # Make sure it's a reasonable match (at least 70% of the phrase)
-                if len(user_input) >= len(phrase) * 0.5:
+                # Make sure it's a reasonable match based on threshold from config
+                if len(user_input) >= len(phrase) * config.FUZZY_MATCH_THRESHOLD:
                     return command
         
         return None

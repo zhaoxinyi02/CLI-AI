@@ -22,6 +22,13 @@ DANGEROUS_PATTERNS = [
 # Maximum command history entries to keep
 MAX_HISTORY_ENTRIES = 1000
 
+# Command execution timeout in seconds
+COMMAND_TIMEOUT = 30
+
+# Fuzzy matching threshold for NLP parser (0.0 to 1.0)
+# Lower values are more lenient, higher values require closer matches
+FUZZY_MATCH_THRESHOLD = 0.5
+
 # Optional: API keys for enhanced NLP (users can add their own)
 # OPENAI_API_KEY = "your-api-key-here"
 # ANTHROPIC_API_KEY = "your-api-key-here"

@@ -73,7 +73,7 @@ class CommandExecutor:
                     text=True
                 )
                 
-                stdout, stderr = process.communicate(timeout=30)
+                stdout, stderr = process.communicate(timeout=config.COMMAND_TIMEOUT)
                 
                 result['return_code'] = process.returncode
                 result['output'] = stdout
@@ -84,7 +84,7 @@ class CommandExecutor:
             self.history.append(result)
             
         except subprocess.TimeoutExpired:
-            result['error'] = "Command execution timeout (30 seconds)"
+            result['error'] = f"Command execution timeout ({config.COMMAND_TIMEOUT} seconds)"
         except Exception as e:
             result['error'] = f"Execution error: {str(e)}"
         

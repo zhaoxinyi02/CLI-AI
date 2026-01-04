@@ -15,18 +15,18 @@ try:
 except ImportError:
     HAS_COLOR = False
     # Define dummy color codes if colorama not available
-    class Fore:
-        GREEN = ''
-        RED = ''
-        YELLOW = ''
-        BLUE = ''
-        CYAN = ''
-        MAGENTA = ''
-        WHITE = ''
+    class ColorCodes:
+        """Fallback color codes when colorama is not available"""
+        pass
     
-    class Style:
-        BRIGHT = ''
-        RESET_ALL = ''
+    Fore = type('Fore', (), {
+        'GREEN': '', 'RED': '', 'YELLOW': '', 'BLUE': '',
+        'CYAN': '', 'MAGENTA': '', 'WHITE': ''
+    })()
+    
+    Style = type('Style', (), {
+        'BRIGHT': '', 'RESET_ALL': ''
+    })()
 
 from nlp_parser import NLPParser
 from command_executor import CommandExecutor
