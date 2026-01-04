@@ -1,0 +1,6 @@
+# Core dependencies for CLI-AI
+# No external AI dependencies required for basic implementation
+# Users can optionally add openai, anthropic, etc. for enhanced NLP
+
+# Optional: for better CLI experience
+colorama>=0.4.6
