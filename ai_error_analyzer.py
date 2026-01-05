@@ -218,7 +218,8 @@ class AICommandSuggester:
                 return response
             
         except Exception as e:
-            # 静默失败，返回 None
+            # 建议功能不应中断主流程
+            # 可以考虑添加日志记录
             pass
         
         return None

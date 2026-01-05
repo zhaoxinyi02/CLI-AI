@@ -33,15 +33,17 @@ from command_executor import CommandExecutor
 import config
 
 # AI 相关导入（可选）
+HAS_AI = False
+AICommandParser = None
+AIErrorAnalyzer = None
+AICommandSuggester = None
+
 try:
     from ai_command_parser import AICommandParser
     from ai_error_analyzer import AIErrorAnalyzer, AICommandSuggester
     HAS_AI = True
 except ImportError:
-    HAS_AI = False
-    AICommandParser = None
-    AIErrorAnalyzer = None
-    AICommandSuggester = None
+    pass
 
 
 class CLIAI:
@@ -53,9 +55,9 @@ class CLIAI:
         self.running = True
         
         # AI 功能初始化
-        self.use_ai_parsing = config.USE_AI_PARSING if HAS_AI else False
-        self.ai_error_analysis = config.AI_ERROR_ANALYSIS if HAS_AI else False
-        self.auto_continue = config.AUTO_CONTINUE_MODE if HAS_AI else False
+        self.use_ai_parsing = config.USE_AI_PARSING and HAS_AI
+        self.ai_error_analysis = config.AI_ERROR_ANALYSIS and HAS_AI
+        self.auto_continue = config.AUTO_CONTINUE_MODE and HAS_AI
         
         self.ai_parser = None
         self.error_analyzer = None
@@ -241,7 +243,7 @@ class CLIAI:
     def _suggest_next_command(self, command, output):
         """建议下一步操作"""
         try:
-            suggestion = self.command_suggester.suggest_next_command(command, output, True)
+            response = self.command_suggester.suggest_next_command(command, output, True)
             if suggestion:
                 print(f"\n{Fore.CYAN}💡 建议: {suggestion}{Style.RESET_ALL}")
                 try:
@@ -251,8 +253,8 @@ class CLIAI:
                         self.process_input(suggestion)
                 except (EOFError, KeyboardInterrupt):
                     print()
-        except Exception:
-            # 静默失败
+        except Exception as e:
+            # 建议功能失败不影响主流程，记录但不显示
             pass
     
     def process_input(self, user_input):

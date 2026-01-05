@@ -1,6 +1,5 @@
 """
 测试 AI 错误分析器和命令建议器模块
-Test AI Error Analyzer and Command Suggester Module
 """
 import os
 from ai_error_analyzer import AIErrorAnalyzer, AICommandSuggester

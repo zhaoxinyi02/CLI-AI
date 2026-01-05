@@ -6,14 +6,18 @@ CLI-AI 功能演示
 import os
 import sys
 
+# Demo configuration constants
+DEMO_AI_PROVIDER = 'deepseek'
+DEMO_API_KEY = 'sk-demo-key'
+
 # 设置测试环境变量（如果没有 .env 文件）
 if not os.path.exists('.env'):
     print("=" * 70)
     print("演示模式：使用模拟 AI 功能")
     print("=" * 70)
     print("提示：要体验完整的 AI 功能，请配置 .env 文件\n")
-    os.environ['AI_PROVIDER'] = 'deepseek'
-    os.environ['DEEPSEEK_API_KEY'] = 'sk-demo-key'
+    os.environ.setdefault('AI_PROVIDER', DEMO_AI_PROVIDER)
+    os.environ.setdefault('DEEPSEEK_API_KEY', DEMO_API_KEY)
 
 from colorama import init, Fore, Style
 init(autoreset=True)
