@@ -72,6 +72,7 @@ CLI-AI> 创建文件夹 test
 
 - `help` 或 `帮助`: 显示帮助信息和常用命令示例
 - `history` 或 `历史`: 查看命令执行历史
+- `config`: 查看和管理配置（详见下方配置管理章节）
 - `exit` 或 `quit` 或 `退出`: 退出程序
 
 ## 支持的命令 | Supported Commands
@@ -165,12 +166,14 @@ CLI-AI/
 ├── command_executor.py         # 命令执行模块
 ├── command_mappings.py         # 命令映射规则
 ├── config.py                   # 配置文件
+├── config_manager.py           # 配置管理模块 (v2.3)
 ├── ai_provider.py              # AI 提供商抽象层 (v2.0)
 ├── ai_command_parser.py        # AI 命令解析器 (v2.1)
 ├── ai_error_analyzer.py        # AI 错误分析器 (v2.2)
 ├── test_ai_provider.py         # AI 集成测试
 ├── test_ai_command_parser.py   # AI 命令解析器测试 (v2.1)
 ├── test_ai_error_analyzer.py   # AI 错误分析器测试 (v2.2)
+├── test_config_and_env.py      # 配置和环境变量测试 (v2.3)
 └── prompts/                    # AI 提示词模板目录 (v2.1)
     ├── .gitkeep
     └── command_generation.txt  # 命令生成提示词
@@ -190,6 +193,67 @@ CLI-AI/
 - `USE_AI_PARSING`: 启用 AI 智能命令解析（默认：True）
 - `AI_ERROR_ANALYSIS`: 启用 AI 错误分析（默认：True）
 - `AUTO_CONTINUE_MODE`: 启用自动建议模式（默认：False）
+
+## 配置管理命令 | Config Command (v2.3)
+
+CLI-AI v2.3 新增了 `config` 命令，可以直接从终端查看和编辑配置文件。
+
+### 配置命令用法
+
+```bash
+# 显示当前配置
+config
+
+# 显示配置（包含完整的敏感信息）
+config show --secrets
+
+# 初始化配置文件（从 .env.example 创建 .env）
+config init
+
+# 设置配置项
+config set AI_PROVIDER openai
+config set OPENAI_API_KEY sk-your-key-here
+
+# 使用编辑器编辑配置文件
+config edit
+
+# 显示配置命令帮助
+config help
+```
+
+### 配置示例
+
+在 CLI-AI 中使用配置命令：
+
+```
+CLI-AI> config init
+✓ 已创建配置文件: .env
+
+CLI-AI> config set AI_PROVIDER openai
+✓ 已更新配置: AI_PROVIDER=openai
+
+CLI-AI> config set OPENAI_API_KEY sk-xxx...
+✓ 已更新配置: OPENAI_API_KEY=sk-xxx...
+
+CLI-AI> config show
+当前配置:
+==================================================
+  AI_PROVIDER: openai
+  OPENAI_API_KEY: sk-x****xxx...
+  OPENAI_BASE_URL: https://api.openai.com/v1
+  OPENAI_MODEL: gpt-4
+==================================================
+```
+
+### 安全特性
+
+- **敏感信息保护**: 默认情况下，API 密钥等敏感信息会被部分隐藏
+- **完整显示**: 使用 `config show --secrets` 查看完整信息
+- **文件权限**: 建议将 .env 文件权限设置为 600（仅所有者可读写）
+
+```bash
+chmod 600 .env
+```
 
 ## AI 配置 | AI Configuration
 
@@ -220,6 +284,61 @@ CLI-AI v2.0 支持使用真实的 AI 模型进行智能命令识别。
 
 - **OpenAI**：GPT-4, GPT-3.5-turbo 等
 - **DeepSeek**：deepseek-chat, deepseek-coder 等
+
+### 代理配置 | Proxy Configuration (v2.3)
+
+CLI-AI v2.3 支持通过代理服务器访问 AI API，支持 HTTP 和 SOCKS5 代理。
+
+#### 配置代理
+
+在 `.env` 文件中添加代理配置：
+
+```bash
+# HTTP 代理
+HTTP_PROXY=http://proxy.example.com:8080
+HTTPS_PROXY=http://proxy.example.com:8080
+
+# SOCKS5 代理
+HTTP_PROXY=socks5://127.0.0.1:1080
+HTTPS_PROXY=socks5://127.0.0.1:1080
+
+# 带认证的代理
+HTTP_PROXY=http://username:password@proxy.example.com:8080
+HTTPS_PROXY=http://username:password@proxy.example.com:8080
+```
+
+#### SOCKS5 代理依赖
+
+如果使用 SOCKS5 代理，需要安装额外依赖：
+
+```bash
+pip install httpx[socks]
+```
+
+如果没有安装此依赖，程序会显示警告并自动禁用 SOCKS5 代理。
+
+#### 系统代理
+
+代理配置也可以通过系统环境变量设置：
+
+```bash
+export HTTP_PROXY=http://proxy.example.com:8080
+export HTTPS_PROXY=http://proxy.example.com:8080
+python3 cli_ai.py
+```
+
+#### 代理故障排除
+
+如果代理配置无效，程序会：
+1. 显示警告信息
+2. 说明支持的代理格式
+3. 继续运行但不使用代理
+
+支持的代理格式：
+- `http://...`
+- `https://...`
+- `socks5://...`
+- `socks5h://...`（DNS 解析通过代理）
 
 ## AI 命令解析器 | AI Command Parser (v2.1)
 
@@ -408,6 +527,145 @@ A: 输入 `help` 查看支持的命令示例，或者在 `command_mappings.py` �
 
 A: 欢迎提交 Pull Request 添加新的命令映射到 `command_mappings.py`！
 
+## 故障排除 | Troubleshooting (v2.3)
+
+### .env 文件相关问题
+
+**问题: 程序提示 ".env 文件未找到"**
+
+解决方案：
+```bash
+# 方案 1: 使用 config 命令初始化（推荐）
+python3 cli_ai.py
+# 在程序中输入: config init
+
+# 方案 2: 手动复制示例文件
+cp .env.example .env
+# 然后编辑 .env 文件，填入你的 API 密钥
+```
+
+**问题: "API 密钥未配置"**
+
+解决方案：
+```bash
+# 方案 1: 使用 config 命令设置
+# 在 CLI-AI 中运行:
+config set AI_PROVIDER openai
+config set OPENAI_API_KEY sk-your-key-here
+
+# 方案 2: 直接编辑 .env 文件
+nano .env
+# 添加或修改:
+# AI_PROVIDER=openai
+# OPENAI_API_KEY=sk-your-key-here
+```
+
+**问题: 修改了 .env 但没有生效**
+
+解决方案：
+- 重启 CLI-AI 程序
+- 确保 .env 文件在当前工作目录
+- 检查环境变量格式是否正确（没有多余空格）
+
+### 代理相关问题
+
+**问题: "代理 URL 格式无效"**
+
+解决方案：
+```bash
+# 正确的代理格式示例
+HTTP_PROXY=http://proxy.example.com:8080
+HTTPS_PROXY=https://proxy.example.com:8080
+HTTP_PROXY=socks5://127.0.0.1:1080
+
+# 错误的格式
+HTTP_PROXY=proxy.example.com:8080  # 缺少协议
+HTTP_PROXY=ftp://proxy.com:8080    # 不支持的协议
+```
+
+**问题: "SOCKS5 代理需要安装额外依赖"**
+
+解决方案：
+```bash
+pip install httpx[socks]
+# 或者改用 HTTP 代理
+```
+
+**问题: 代理连接超时或失败**
+
+排查步骤：
+1. 检查代理服务器是否正常运行
+2. 验证代理地址和端口是否正确
+3. 如果代理需要认证，确保在 URL 中包含用户名和密码
+4. 尝试在浏览器中使用相同的代理设置
+5. 临时禁用代理测试是否是代理问题
+
+### AI 功能相关问题
+
+**问题: AI 命令解析初始化失败**
+
+可能原因和解决方案：
+1. **API 密钥未配置**: 使用 `config` 命令设置 API 密钥
+2. **网络问题**: 检查网络连接，如在中国大陆可能需要配置代理
+3. **API 额度用尽**: 检查你的 API 账户额度
+4. **API 密钥无效**: 验证 API 密钥是否正确
+
+程序会自动降级到规则匹配模式，不影响基础功能。
+
+**问题: "AI 调用失败"**
+
+解决方案：
+```bash
+# 1. 检查配置
+config show
+
+# 2. 验证网络连接
+ping api.openai.com
+# 或
+ping api.deepseek.com
+
+# 3. 检查代理设置（如果使用）
+echo $HTTP_PROXY
+echo $HTTPS_PROXY
+
+# 4. 查看详细错误信息
+# 程序会显示具体的错误原因
+```
+
+### 权限相关问题
+
+**问题: "Permission denied" 执行命令**
+
+解决方案：
+- 某些命令需要管理员权限，使用 `sudo` 前缀
+- 或者在 CLI-AI 中输入 "切换到管理员" 进入 sudo 模式
+
+**问题: 无法编辑 .env 文件**
+
+解决方案：
+```bash
+# 检查文件权限
+ls -l .env
+
+# 修改文件权限（如果需要）
+chmod 600 .env
+
+# 或使用 sudo 编辑
+sudo nano .env
+```
+
+### 获取更多帮助
+
+如果以上方法都无法解决问题：
+
+1. **查看日志**: 程序会输出详细的错误信息
+2. **检查依赖**: `pip list | grep -E "openai|httpx|python-dotenv"`
+3. **提交 Issue**: 在 GitHub 上提交问题，包含：
+   - 错误信息的完整输出
+   - 使用的操作系统和 Python 版本
+   - .env 配置（隐藏敏感信息）
+   - 复现步骤
+
 ## 注意事项 | Notes
 
 - 本工具仅用于学习和辅助目的
@@ -428,6 +686,17 @@ MIT License
 zhaoxinyi02
 
 ## 更新日志 | Changelog
+
+### v2.3.0 (2026-01-05)
+- ✨ 新增 `config` 命令用于配置管理
+- 🔧 修复 .env 文件加载问题，添加文件存在性验证
+- 🌐 新增代理支持（HTTP 和 SOCKS5）
+- 🛡️ 增强错误处理和用户友好的错误消息
+- 💡 改进 API 密钥和代理配置的错误提示
+- 📚 添加详细的故障排除文档
+- ✅ 新增配置和环境变量测试套件
+- 🔐 配置显示时自动隐藏敏感信息
+- 📦 代理配置支持自动降级和故障恢复
 
 ### v2.2.0 (2026-01-05)
 - ✨ 集成 AI 智能命令解析到主程序流程
