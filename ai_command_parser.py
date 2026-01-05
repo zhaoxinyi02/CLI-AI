@@ -129,13 +129,6 @@ class AICommandParser:
         # 基础格式检查：去除前导/尾随空格
         command = command.strip()
         
-        # 验证命令不包含非法字符（允许常见的命令字符）
-        # 只做基础检查，不深度验证
-        if command and not re.match(r'^[a-zA-Z0-9\s\-\_\.\,\/\|\>\<\=\:\;\(\)\[\]\{\}\'\"\*\&\@\#\!\?\+\~\$\%\^]+$', command):
-            # 如果包含完全不可能的字符，可能是解释性文字，尝试进一步清理
-            # 但通常此时应该已经清理干净了
-            pass
-        
         return command
 
 
