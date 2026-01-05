@@ -161,14 +161,16 @@ CLI-AI/
 ├── .gitignore                  # Git 忽略文件
 ├── .env.example                # 环境变量配置示例
 ├── cli_ai.py                   # 主程序入口
-├── nlp_parser.py               # 自然语言解析模块
+├── nlp_parser.py               # 自然语言解析模块（规则匹配）
 ├── command_executor.py         # 命令执行模块
 ├── command_mappings.py         # 命令映射规则
 ├── config.py                   # 配置文件
-├── ai_provider.py              # AI 提供商抽象层
+├── ai_provider.py              # AI 提供商抽象层 (v2.0)
 ├── ai_command_parser.py        # AI 命令解析器 (v2.1)
+├── ai_error_analyzer.py        # AI 错误分析器 (v2.2)
 ├── test_ai_provider.py         # AI 集成测试
 ├── test_ai_command_parser.py   # AI 命令解析器测试 (v2.1)
+├── test_ai_error_analyzer.py   # AI 错误分析器测试 (v2.2)
 └── prompts/                    # AI 提示词模板目录 (v2.1)
     ├── .gitkeep
     └── command_generation.txt  # 命令生成提示词
@@ -178,10 +180,16 @@ CLI-AI/
 
 你可以在 `config.py` 中修改配置：
 
+**基础配置**：
 - `HISTORY_FILE`: 命令历史文件路径
 - `ENABLE_HISTORY`: 是否启用命令历史记录
 - `MAX_HISTORY_ENTRIES`: 最大历史记录条数
 - `DANGEROUS_PATTERNS`: 危险命令模式列表
+
+**AI 功能配置** (v2.2)：
+- `USE_AI_PARSING`: 启用 AI 智能命令解析（默认：True）
+- `AI_ERROR_ANALYSIS`: 启用 AI 错误分析（默认：True）
+- `AUTO_CONTINUE_MODE`: 启用自动建议模式（默认：False）
 
 ## AI 配置 | AI Configuration
 
@@ -267,6 +275,108 @@ ai_command_parser.py          # AI 命令解析器
 test_ai_command_parser.py     # 测试文件
 ```
 
+## AI 功能详解 | AI Features (v2.2)
+
+### 智能命令解析
+
+CLI-AI v2.2 默认启用 AI 智能命令解析，可以理解更复杂的自然语言输入。
+
+**配置方式**：
+- 在 `config.py` 中设置 `USE_AI_PARSING = True`（默认启用）
+- 需要配置 `.env` 文件中的 API 密钥
+
+**功能特点**：
+- 🧠 **智能理解**：使用 AI 模型深度理解自然语言意图
+- 🌐 **更强的语言支持**：支持各种表达方式和复杂描述
+- 🔄 **自动降级**：如果 AI 不可用，自动切换到规则匹配模式
+- ⚡ **实时解析**：每次输入独立处理，响应迅速
+
+### AI 错误分析
+
+当命令执行失败时，AI 会自动分析错误原因并提供解决方案。
+
+**配置方式**：
+- 在 `config.py` 中设置 `AI_ERROR_ANALYSIS = True`（默认启用）
+
+**功能特点**：
+- 🔍 **智能诊断**：AI 分析错误输出，识别问题根源
+- 💡 **解决建议**：提供具体的修复步骤
+- 🔧 **替代命令**：自动生成修复命令，用户确认后执行
+- 🛡️ **安全降级**：AI 不可用时使用基础模式识别常见错误
+
+**使用示例**：
+```
+CLI-AI> cat /root/secret.txt
+我将执行命令: cat /root/secret.txt
+是否继续？(y/n): y
+
+执行失败:
+cat: /root/secret.txt: Permission denied
+返回码: 1
+
+🔍 分析错误...
+原因: 权限不足
+建议: 尝试使用 sudo 运行命令
+
+建议的替代命令: sudo cat /root/secret.txt
+是否执行建议的命令？(y/n): 
+```
+
+### 智能命令建议（自动模式）
+
+命令执行成功后，AI 可以建议下一步的合理操作。
+
+**配置方式**：
+- 在 `config.py` 中设置 `AUTO_CONTINUE_MODE = True`（默认关闭）
+
+**功能特点**：
+- 🤖 **智能预测**：根据当前操作预测下一步需求
+- 🔄 **工作流延续**：自然衔接多个相关操作
+- 👤 **用户控制**：所有建议都需要用户确认
+- 💭 **情境感知**：基于命令输出和执行结果做出判断
+
+**使用示例**：
+```
+CLI-AI> 创建文件夹 myproject
+我将执行命令: mkdir myproject
+是否继续？(y/n): y
+执行成功
+
+💡 建议: 进入刚创建的目录
+是否执行？(y/n): y
+
+我将执行命令: cd myproject
+...
+```
+
+### 配置参数说明
+
+在 `config.py` 中可配置的 AI 功能参数：
+
+```python
+# AI 智能解析（推荐启用）
+USE_AI_PARSING = True          # 使用 AI 解析自然语言
+
+# AI 错误分析（推荐启用）
+AI_ERROR_ANALYSIS = True       # 使用 AI 分析错误并提供建议
+
+# 自动建议模式（可选）
+AUTO_CONTINUE_MODE = False     # AI 建议下一步操作
+```
+
+### 测试 AI 功能
+
+```bash
+# 测试 AI 命令解析器
+python test_ai_command_parser.py
+
+# 测试 AI 错误分析器
+python test_ai_error_analyzer.py
+
+# 测试完整的 AI 集成
+python test_ai_provider.py
+```
+
 ## 扩展功能 | Extensions
 
 ### 添加自定义命令映射
@@ -318,6 +428,15 @@ MIT License
 zhaoxinyi02
 
 ## 更新日志 | Changelog
+
+### v2.2.0 (2026-01-05)
+- ✨ 集成 AI 智能命令解析到主程序流程
+- 🔍 新增 AI 错误分析功能 (`ai_error_analyzer.py`)
+- 💡 新增智能命令建议功能（自动建议下一步操作）
+- ⚙️ 新增配置选项：`USE_AI_PARSING`、`AI_ERROR_ANALYSIS`、`AUTO_CONTINUE_MODE`
+- 🧪 添加错误分析器测试套件 (`test_ai_error_analyzer.py`)
+- 🛡️ AI 模块初始化失败时自动降级到规则匹配模式
+- 📚 完善 AI 功能文档和配置说明
 
 ### v2.1.0 (2026-01-05)
 - ✨ 新增 AI 命令解析器模块 (`ai_command_parser.py`)

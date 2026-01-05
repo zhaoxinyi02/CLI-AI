@@ -30,6 +30,20 @@ except ImportError:
 
 from nlp_parser import NLPParser
 from command_executor import CommandExecutor
+import config
+
+# AI 相关导入（可选）
+HAS_AI = False
+AICommandParser = None
+AIErrorAnalyzer = None
+AICommandSuggester = None
+
+try:
+    from ai_command_parser import AICommandParser
+    from ai_error_analyzer import AIErrorAnalyzer, AICommandSuggester
+    HAS_AI = True
+except ImportError:
+    pass
 
 
 class CLIAI:
@@ -39,6 +53,36 @@ class CLIAI:
         self.parser = NLPParser()
         self.executor = CommandExecutor()
         self.running = True
+        
+        # AI 功能初始化
+        self.use_ai_parsing = config.USE_AI_PARSING and HAS_AI
+        self.ai_error_analysis = config.AI_ERROR_ANALYSIS and HAS_AI
+        self.auto_continue = config.AUTO_CONTINUE_MODE and HAS_AI
+        
+        self.ai_parser = None
+        self.error_analyzer = None
+        self.command_suggester = None
+        
+        # 尝试初始化 AI 模块
+        if self.use_ai_parsing and HAS_AI:
+            try:
+                self.ai_parser = AICommandParser()
+                print(f"{Fore.GREEN}✓ AI 命令解析已启用{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.YELLOW}⚠️  AI 命令解析初始化失败，将使用规则匹配: {e}{Style.RESET_ALL}")
+                self.use_ai_parsing = False
+        
+        if self.ai_error_analysis and HAS_AI:
+            try:
+                self.error_analyzer = AIErrorAnalyzer()
+            except Exception:
+                self.ai_error_analysis = False
+        
+        if self.auto_continue and HAS_AI:
+            try:
+                self.command_suggester = AICommandSuggester()
+            except Exception:
+                self.auto_continue = False
     
     def print_welcome(self):
         """Print welcome message"""
@@ -48,6 +92,20 @@ class CLIAI:
         print("  帮助 Linux 初学者使用自然语言执行命令")
         print("=" * 70)
         print(f"{Style.RESET_ALL}")
+        
+        # 显示 AI 功能状态
+        if self.use_ai_parsing:
+            print(f"{Fore.GREEN}🤖 AI 命令解析: 已启用{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.YELLOW}📋 命令解析: 规则匹配模式{Style.RESET_ALL}")
+        
+        if self.ai_error_analysis:
+            print(f"{Fore.GREEN}🔍 AI 错误分析: 已启用{Style.RESET_ALL}")
+        
+        if self.auto_continue:
+            print(f"{Fore.GREEN}⚡ 自动建议模式: 已启用{Style.RESET_ALL}")
+        
+        print()
         print(f"{Fore.YELLOW}使用说明:")
         print("  - 用中文或英文描述你想做的操作")
         print("  - 输入 'help' 查看常用命令")
@@ -140,12 +198,64 @@ class CLIAI:
             if not is_interactive and result['output']:
                 print(f"\n{Fore.GREEN}执行成功:{Style.RESET_ALL}")
                 print(result['output'])
+            
+            # AI 建议下一步操作
+            if self.auto_continue and self.command_suggester and not is_interactive:
+                self._suggest_next_command(command, result['output'])
         else:
             print(f"\n{Fore.RED}执行失败:{Style.RESET_ALL}")
             if result['error']:
                 print(f"{Fore.RED}{result['error']}{Style.RESET_ALL}")
             if result.get('return_code', -1) != 0:
                 print(f"{Fore.RED}返回码: {result['return_code']}{Style.RESET_ALL}")
+            
+            # AI 错误分析
+            if self.ai_error_analysis and self.error_analyzer:
+                self._analyze_and_suggest_fix(command, result)
+    
+    def _analyze_and_suggest_fix(self, command, result):
+        """分析错误并提供修复建议"""
+        try:
+            print(f"\n{Fore.CYAN}🔍 分析错误...{Style.RESET_ALL}")
+            analysis = self.error_analyzer.analyze_error(
+                command,
+                result.get('error', ''),
+                result.get('return_code', -1)
+            )
+            
+            if analysis['analysis']:
+                print(f"{Fore.YELLOW}原因: {analysis['analysis']}{Style.RESET_ALL}")
+            
+            if analysis['suggestion']:
+                print(f"{Fore.CYAN}建议: {analysis['suggestion']}{Style.RESET_ALL}")
+            
+            if analysis['alternative_command']:
+                print(f"\n{Fore.GREEN}建议的替代命令: {Style.BRIGHT}{analysis['alternative_command']}{Style.RESET_ALL}")
+                try:
+                    response = input(f"{Fore.CYAN}是否执行建议的命令？(y/n): {Style.RESET_ALL}").strip().lower()
+                    if response in ['y', 'yes', '是', 'ok']:
+                        self.execute_command(analysis['alternative_command'])
+                except (EOFError, KeyboardInterrupt):
+                    print()
+        except Exception as e:
+            print(f"{Fore.YELLOW}错误分析失败: {e}{Style.RESET_ALL}")
+    
+    def _suggest_next_command(self, command, output):
+        """建议下一步操作"""
+        try:
+            response = self.command_suggester.suggest_next_command(command, output, True)
+            if suggestion:
+                print(f"\n{Fore.CYAN}💡 建议: {suggestion}{Style.RESET_ALL}")
+                try:
+                    response = input(f"{Fore.CYAN}是否执行？(y/n): {Style.RESET_ALL}").strip().lower()
+                    if response in ['y', 'yes', '是', 'ok']:
+                        # 递归处理建议的命令
+                        self.process_input(suggestion)
+                except (EOFError, KeyboardInterrupt):
+                    print()
+        except Exception as e:
+            # 建议功能失败不影响主流程，记录但不显示
+            pass
     
     def process_input(self, user_input):
         """
@@ -174,7 +284,20 @@ class CLIAI:
             return
         
         # Parse natural language to command
-        command = self.parser.parse(user_input)
+        command = None
+        
+        # 尝试使用 AI 解析
+        if self.use_ai_parsing and self.ai_parser:
+            try:
+                command = self.ai_parser.parse_command(user_input)
+                print(f"{Fore.CYAN}🤖 AI 解析{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.YELLOW}⚠️  AI 解析失败: {e}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}   尝试使用规则匹配...{Style.RESET_ALL}")
+        
+        # 如果 AI 解析失败或未启用，使用规则匹配
+        if not command:
+            command = self.parser.parse(user_input)
         
         if command:
             # Confirm before execution
