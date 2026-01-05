@@ -30,6 +30,7 @@ except ImportError:
 
 from nlp_parser import NLPParser
 from command_executor import CommandExecutor
+from config_manager import handle_config_command
 import config
 
 # AI 相关导入（可选）
@@ -68,6 +69,14 @@ class CLIAI:
             try:
                 self.ai_parser = AICommandParser()
                 print(f"{Fore.GREEN}✓ AI 命令解析已启用{Style.RESET_ALL}")
+            except ValueError as e:
+                # API 密钥或配置错误
+                print(f"{Fore.YELLOW}⚠️  AI 命令解析初始化失败: {Style.RESET_ALL}")
+                error_msg = str(e)
+                for line in error_msg.split('\n'):
+                    print(f"{Fore.YELLOW}   {line}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}   将使用规则匹配模式{Style.RESET_ALL}")
+                self.use_ai_parsing = False
             except Exception as e:
                 print(f"{Fore.YELLOW}⚠️  AI 命令解析初始化失败，将使用规则匹配: {e}{Style.RESET_ALL}")
                 self.use_ai_parsing = False
@@ -89,6 +98,7 @@ class CLIAI:
         print(f"{Fore.CYAN}{Style.BRIGHT}")
         print("=" * 70)
         print("  CLI-AI: Terminal AI Assistant")
+        print(f"  Version {config.VERSION}")
         print("  帮助 Linux 初学者使用自然语言执行命令")
         print("=" * 70)
         print(f"{Style.RESET_ALL}")
@@ -110,6 +120,7 @@ class CLIAI:
         print("  - 用中文或英文描述你想做的操作")
         print("  - 输入 'help' 查看常用命令")
         print("  - 输入 'history' 查看命令历史")
+        print("  - 输入 'config' 查看或修改配置")
         print("  - 输入 'exit' 或 'quit' 退出程序")
         print(f"{Style.RESET_ALL}")
     
@@ -283,6 +294,14 @@ class CLIAI:
             self.print_history()
             return
         
+        # Handle config command
+        if user_input.lower().startswith('config'):
+            # Parse config command arguments
+            parts = user_input.split()
+            args = parts[1:] if len(parts) > 1 else []
+            handle_config_command(args)
+            return
+        
         # Parse natural language to command
         command = None
         
@@ -308,6 +327,13 @@ class CLIAI:
         else:
             print(f"{Fore.RED}抱歉，我不理解这个命令。{Style.RESET_ALL}")
             print(f"{Fore.YELLOW}提示: 输入 'help' 查看常用命令示例{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}或者: 输入 'config' 查看配置{Style.RESET_ALL}")
+            
+            # 提供更多帮助信息
+            if self.use_ai_parsing:
+                print(f"{Fore.CYAN}提示: AI 解析已启用，可以尝试用更详细的语言描述{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.CYAN}提示: 可以使用 'config' 命令配置 AI 功能{Style.RESET_ALL}")
     
     def run(self):
         """Main application loop"""

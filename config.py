@@ -2,6 +2,9 @@
 Configuration file for CLI-AI terminal assistant
 """
 
+# Version
+VERSION = "2.3.0"
+
 # Command history file
 HISTORY_FILE = "command_history.txt"
 
