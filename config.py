@@ -29,6 +29,19 @@ COMMAND_TIMEOUT = 30
 # Lower values are more lenient, higher values require closer matches
 FUZZY_MATCH_THRESHOLD = 0.5
 
+# AI-based command parsing (v2.2)
+# Set to True to use AI for command parsing instead of rule-based matching
+# Requires AI_PROVIDER configuration in .env file
+USE_AI_PARSING = True
+
+# Auto-continuation mode (v2.2)
+# When enabled, AI will suggest next commands after successful execution
+AUTO_CONTINUE_MODE = False
+
+# Error analysis mode (v2.2)
+# When enabled, AI will analyze error messages and suggest fixes
+AI_ERROR_ANALYSIS = True
+
 # Optional: API keys for enhanced NLP (users can add their own)
 # OPENAI_API_KEY = "your-api-key-here"
 # ANTHROPIC_API_KEY = "your-api-key-here"
