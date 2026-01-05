@@ -159,11 +159,14 @@ CLI-AI/
 ├── README.md              # 项目说明文档
 ├── requirements.txt       # Python 依赖
 ├── .gitignore            # Git 忽略文件
+├── .env.example          # 环境变量配置示例
 ├── cli_ai.py             # 主程序入口
 ├── nlp_parser.py         # 自然语言解析模块
 ├── command_executor.py   # 命令执行模块
 ├── command_mappings.py   # 命令映射规则
-└── config.py             # 配置文件
+├── config.py             # 配置文件
+├── ai_provider.py        # AI 提供商抽象层
+└── test_ai_provider.py   # AI 集成测试
 ```
 
 ## 配置 | Configuration
@@ -174,6 +177,36 @@ CLI-AI/
 - `ENABLE_HISTORY`: 是否启用命令历史记录
 - `MAX_HISTORY_ENTRIES`: 最大历史记录条数
 - `DANGEROUS_PATTERNS`: 危险命令模式列表
+
+## AI 配置 | AI Configuration
+
+CLI-AI v2.0 支持使用真实的 AI 模型进行智能命令识别。
+
+### 配置步骤
+
+1. 复制 `.env.example` 为 `.env`：
+   ```bash
+   cp .env.example .env
+   ```
+
+2. 编辑 `.env` 文件，填入你的 API 密钥：
+   - 使用 OpenAI：设置 `AI_PROVIDER=openai` 和 `OPENAI_API_KEY`
+   - 使用 DeepSeek：设置 `AI_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`
+
+3. 安装依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. 测试 AI 集成：
+   ```bash
+   python test_ai_provider.py
+   ```
+
+### 支持的 AI 提供商
+
+- **OpenAI**：GPT-4, GPT-3.5-turbo 等
+- **DeepSeek**：deepseek-chat, deepseek-coder 等
 
 ## 扩展功能 | Extensions
 
@@ -187,17 +220,6 @@ COMMAND_MAPPINGS = {
     # ... 更多映射
 }
 ```
-
-### 集成 AI API（可选）
-
-如果你想使用更强大的 AI 能力，可以在 `config.py` 中配置 API 密钥：
-
-```python
-OPENAI_API_KEY = "your-api-key-here"
-ANTHROPIC_API_KEY = "your-api-key-here"
-```
-
-然后在 `nlp_parser.py` 中集成相应的 API 调用。
 
 ## 常见问题 | FAQ
 

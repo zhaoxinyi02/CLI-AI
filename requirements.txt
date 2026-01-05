@@ -4,3 +4,7 @@
 
 # Optional: for better CLI experience
 colorama>=0.4.6
+
+# AI model integration (v2.0)
+openai>=1.0.0
+python-dotenv>=1.0.0

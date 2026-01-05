@@ -38,6 +38,7 @@ command_history.txt
 
 # Config with sensitive data
 config_local.py
+.env
 
 # OS
 .DS_Store
