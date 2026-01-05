@@ -140,7 +140,11 @@ class AIErrorAnalyzer:
         
         elif 'already exists' in error_lower or '已存在' in error_output:
             result['analysis'] = '文件或目录已存在'
-            result['suggestion'] = '使用不同的名称或先删除现有文件'
+            result['suggestion'] = '使用不同的名称，或先删除/重命名现有文件'
+            # 检查是否是 mkdir 命令
+            if command.startswith('mkdir'):
+                folder_name = command.replace('mkdir', '').strip().split()[0]
+                result['alternative_command'] = f'rm -rf {folder_name} && {command}'
         
         else:
             result['analysis'] = f'命令执行失败，返回码: {return_code}'
