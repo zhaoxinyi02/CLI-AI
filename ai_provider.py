@@ -36,6 +36,8 @@ class AIProvider:
             return os.getenv("OPENAI_MODEL", "gpt-4")
         elif self.provider == "deepseek":
             return os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+        else:
+            raise ValueError(f"不支持的 AI 提供商: {self.provider}")
     
     def generate_response(
         self,
@@ -72,6 +74,9 @@ class AIProvider:
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            return response.choices[0].message.content.strip()
+            content = response.choices[0].message.content
+            if content is None:
+                raise Exception("AI 返回了空响应")
+            return content.strip()
         except Exception as e:
             raise Exception(f"AI 调用失败: {str(e)}")
